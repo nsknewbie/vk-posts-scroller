@@ -129,7 +129,7 @@
                 return;
             }
 
-            const link = this.activePost.querySelector('a[onclick*="Likes.toggle"]');
+            const link = this.activePost.querySelector('.PostButtonReactions');
 
             if (link) {
                 link.click();
