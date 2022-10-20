@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name        VK Posts scroller
-// @version     1.0
+// @version     1.0.1
 // @namespace   https://github.com/nsknewbie/vk-posts-scroller
 // @author      Evgeniy Tsvetkov (https://github.com/nsknewbie)
-// @description Smart posts scrolling for https://vk.com
+// @description Smart posts scrolling for vk.com
 // @homepageURL https://github.com/nsknewbie/vk-posts-scroller
 // @match       *://vk.com/*
 // @run-at      document-end
@@ -38,13 +38,18 @@
         hasScrollChecks: false,
 
         focusAfterHideOrRestorePost: debounce(function () {
-            this.scrollToPost(this.activePost);
+            this.setActivePost(this.activePost);
         }, 150),
 
         setActivePost(post) {
+            this.unsetActivePost();
+
             post.style['box-shadow'] = 'rgba(89, 125, 163, 0.66) 0px 0px 5px 2px';
             this.activePost = post;
-            this.startScrollChecks();
+
+            this.scrollToPost(post).then(() => {
+                this.startScrollChecks();
+            });
         },
 
         unsetActivePost() {
@@ -55,7 +60,7 @@
 
         startScrollChecks() {
             if (!this.hasScrollChecks) {
-                window.addEventListener('scroll', this.scrollCheck);
+                window.addEventListener('scroll', this.scrollCheck, { passive: true });
             }
 
             this.hasScrollChecks = true;
@@ -89,15 +94,34 @@
         },
 
         scrollToPost(post) {
-            const {top: screenTop, height: postHeight} = post.getBoundingClientRect();
+            const { top: screenTop, height: postHeight } = post.getBoundingClientRect();
             const offsetTop = Math.round(window.scrollY + screenTop - menuHeight) - Math.max(Math.ceil(window.innerHeight - menuHeight - postHeight) / 2, 0);
 
-            this.unsetActivePost();
-            window.scrollTo({
-                top: offsetTop,
-                behavior: 'smooth',
+            return new Promise((resolve, reject) => {
+                let timer;
+                let scrollCallback = () => {
+                    clearTimeout(timer);
+
+                    timer = setTimeout(() => {
+                        window.removeEventListener('scroll', scrollCallback);
+
+                        resolve();
+                    }, 50);
+                };
+
+                window.addEventListener('scroll', scrollCallback, { passive: true });
+
+                setTimeout(() => {
+                    window.removeEventListener('scroll', scrollCallback);
+
+                    reject();
+                }, 3000);
+
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth',
+                });
             });
-            this.setActivePost(post);
         },
 
         nextPost() {
@@ -110,7 +134,7 @@
 
             let next = posts[posts.indexOf(this.activePost) + (hasActivePost ? 1 : 0)];
             if (next) {
-                this.scrollToPost(next);
+                this.setActivePost(next);
             }
         },
 
@@ -120,7 +144,7 @@
             this.activePost = this.activePost || this.findVisiblePost(posts);
             let prev = posts[posts.indexOf(this.activePost) - 1];
             if (prev) {
-                this.scrollToPost(prev);
+                this.setActivePost(prev);
             }
         },
 
@@ -134,7 +158,7 @@
             if (link) {
                 link.click();
 
-                link.dispatchEvent(new MouseEvent('mouseout', {'view': window, 'bubbles': true, 'cancelable': true}));
+                link.dispatchEvent(new MouseEvent('mouseout', { 'view': window, 'bubbles': true, 'cancelable': true }));
             }
         },
 
@@ -177,7 +201,7 @@
 
         findVisiblePost(posts) {
             for (let i = 0; i < posts.length; i++) {
-                const {top} = posts[i].getBoundingClientRect();
+                const { top } = posts[i].getBoundingClientRect();
 
                 if (top - menuHeight >= 0) {
                     return posts[i];
