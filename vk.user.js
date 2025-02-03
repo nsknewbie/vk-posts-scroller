@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name        VK Posts scroller
-// @version     1.0.1
+// @version     1.1
 // @namespace   https://github.com/nsknewbie/vk-posts-scroller
 // @author      Evgeniy Tsvetkov (https://github.com/nsknewbie)
 // @description Smart posts scrolling for vk.com
 // @homepageURL https://github.com/nsknewbie/vk-posts-scroller
 // @match       *://vk.com/*
 // @run-at      document-end
-// @grant       none
+// @grant       GM_addStyle
 // @updateURL   https://github.com/nsknewbie/vk-posts-scroller/raw/master/vk.user.js
 // @downloadURL https://github.com/nsknewbie/vk-posts-scroller/raw/master/vk.user.js
 // ==/UserScript==
@@ -29,7 +29,7 @@
             timeout = setTimeout(functionCall, time);
         };
     };
-    const POST_SELECTOR = '[data-post-id][class*="page"]:not([data-ad-block-uid])';
+    const POST_SELECTOR = '.post[data-post-id]:not([data-ad-block-uid])';
     const menuHeight = document.querySelector('#page_header_cont').clientHeight;
 
     const feed = {
@@ -44,8 +44,8 @@
         setActivePost(post) {
             this.unsetActivePost();
 
-            post.style['box-shadow'] = 'rgba(89, 125, 163, 0.66) 0px 0px 5px 2px';
             this.activePost = post;
+            this.activePost.classList.add('vk-post-scroller--active-post');
 
             this.scrollToPost(post).then(() => {
                 this.startScrollChecks();
@@ -53,7 +53,7 @@
         },
 
         unsetActivePost() {
-            this.activePost.style['box-shadow'] = 'none';
+            this.activePost.classList.remove('vk-post-scroller--active-post');
             this.activePost = void 0;
             this.stopScrollChecks();
         },
@@ -142,10 +142,29 @@
             const posts = this.findPosts();
 
             this.activePost = this.activePost || this.findVisiblePost(posts);
-            let prev = posts[posts.indexOf(this.activePost) - 1];
-            if (prev) {
-                this.setActivePost(prev);
+            let prev = posts[posts.indexOf(this.activePost) - 1] ?? posts[0];
+
+            this.setActivePost(prev);
+        },
+
+        nextPhoto() {
+            if (!this.activePost) {
+                return;
             }
+
+            let button = this.activePost.querySelector('.vkuiScrollArrow.vkuiScrollArrow--direction-right');
+
+            button?.click();
+        },
+
+        prevPhoto() {
+            if (!this.activePost) {
+                return;
+            }
+
+            let button = this.activePost.querySelector('.vkuiScrollArrow.vkuiScrollArrow--direction-left');
+
+            button?.click();
         },
 
         likePost() {
@@ -224,6 +243,12 @@
             case 'KeyS':
                 feed.nextPost();
                 break;
+            case 'KeyA':
+                feed.prevPhoto();
+                break;
+            case 'KeyD':
+                feed.nextPhoto();
+                break;
             case 'KeyF':
                 feed.likePost();
                 break;
@@ -232,4 +257,10 @@
                 break;
         }
     });
+
+    GM_addStyle(`
+    .vk-post-scroller--active-post {
+        box-shadow: rgba(89, 125, 163, 0.66) 0px 0px 5px 2px !important;
+    }
+    `);
 })();
