@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        VK Posts scroller
-// @version     1.1
+// @version     1.1.1
 // @namespace   https://github.com/nsknewbie/vk-posts-scroller
 // @author      Evgeniy Tsvetkov (https://github.com/nsknewbie)
 // @description Smart posts scrolling for vk.com
@@ -152,7 +152,7 @@
                 return;
             }
 
-            let button = this.activePost.querySelector('.vkuiScrollArrow.vkuiScrollArrow--direction-right');
+            let button = this.activePost.querySelector('.vkuiCarouselBase__arrow.vkuiScrollArrow__directionRight');
 
             button?.click();
         },
@@ -162,7 +162,7 @@
                 return;
             }
 
-            let button = this.activePost.querySelector('.vkuiScrollArrow.vkuiScrollArrow--direction-left');
+            let button = this.activePost.querySelector('.vkuiCarouselBase__arrow.vkuiScrollArrow__directionLeft');
 
             button?.click();
         },
